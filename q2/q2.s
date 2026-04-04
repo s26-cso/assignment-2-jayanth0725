@@ -1,5 +1,6 @@
 .data
     format_string: .string "%d "        # Format string for printing the nge indices
+    format_endstr: .string "%d"         # Format string for printing the last index of the nge output array
     newline_string: .string "\n"        # Format string for new line character at the end of printing the result
 
 .text
@@ -83,30 +84,37 @@ main:
     print_result:
         addi x27, x0, 0                 # Reset loop counter i to 0
         add x28, x24, x0                # Copy the base address of result array to x28
-
+        addi x20, x22, -1               # Set the value of x20 to n-1 for pritning the last index
+        
         print_loop:
             bge x27, x22, nge_done      # If loop counter i >= n, branch to nge_done
             slli x28, x27, 2            # Calculate offset - i*4
             add x28, x24, x28           # Add offset to base address of result array res to get res[i]
-            la x10, format_string       # Load address of format_string into x10
+            beq x27, x20, print_end     # If loop counter i == n-1, branch to print_end
+            la x10, format_string       # Else, load address of format_string into x10
             lw x11, 0(x28)              # Load the value of res[i] into x11
-            jal x1, printf              # Call C printf to print the nge result to print the nge for that index
+            jal x1, printf              # Call C printf to print the nge index in the result array
             addi x27, x27, 1            # Increment loop counter i by 1
             jal x0, print_loop          # Unconditional jump back to start of print_loop
+
+        print_end:
+            la x10, format_endstr       # Load address of format_endstr into x10
+            lw x11, 0(x28)              # Load the value of res[n-1] into x11
+            jal x1, printf              # Call C printf to print the nge index in the result array
 
         nge_done:
             la x10, newline_string      # Load address of newline_string into x10
             jal x1, printf              # Call C printf to print newline at the end of the printed result array
-            ld x27, 8(sp)               # Restoring original value of x27 back
-            ld x26, 16(sp)              # Restoring original value of x26 back
-            ld x25, 24(sp)              # Restoring original value of x25 back
-            ld x24, 32(sp)              # Restoring original value of x24 back
-            ld x23, 40(sp)              # Restoring original value of x23 back
-            ld x22, 48(sp)              # Restoring original value of x22 back
-            ld x21, 56(sp)              # Restoring original value of x21 back
-            ld x20, 64(sp)              # Restoring original value of x20 back
-            ld x1, 72(sp)               # Restoring original return address into x1
-            addi sp, sp, 80             # Deallocating the stack
+            ld x27, 8(sp)               # Restore original value of x27 back
+            ld x26, 16(sp)              # Restore original value of x26 back
+            ld x25, 24(sp)              # Restore original value of x25 back
+            ld x24, 32(sp)              # Restore original value of x24 back
+            ld x23, 40(sp)              # Restore original value of x23 back
+            ld x22, 48(sp)              # Restore original value of x22 back
+            ld x21, 56(sp)              # Restore original value of x21 back
+            ld x20, 64(sp)              # Restore original value of x20 back
+            ld x1, 72(sp)               # Restore original return address into x1
+            addi sp, sp, 80             # Deallocate the stack
             addi x10, x0, 0             # Setting return register x10 to 0 to indicate success
             jalr x0, 0(x1)              # Return to caller - program ends
 
